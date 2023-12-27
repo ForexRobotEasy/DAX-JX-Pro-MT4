@@ -1,0 +1,87 @@
+mql5
+//+------------------------------------------------------------------+
+//|                                                     DAX JX Pro MT4 |
+//|                                        https://www.forexroboteasy.com |
+//|                                                  Forex Robot Easy Team |
+//+------------------------------------------------------------------+
+
+// Define input parameters
+input double LotSize = 0.1;
+input int StopLoss = 50;
+input int TakeProfit = 100;
+
+// Define global variables
+bool tradeAllowed = true;
+
+//+------------------------------------------------------------------+
+//| Expert initialization function                                   |
+//+------------------------------------------------------------------+
+int OnInit()
+{
+    // Enable trading only if the EA is attached to the correct symbol chart
+    if (Symbol() != 'DAX')
+    {
+        tradeAllowed = false;
+        Print('Please attach the EA to the DAX symbol chart.');
+    }
+    
+    return(INIT_SUCCEEDED);
+}
+
+//+------------------------------------------------------------------+
+//| Expert deinitialization function                                 |
+//+------------------------------------------------------------------+
+void OnDeinit(const int reason)
+{
+    // Perform necessary cleanup tasks before the EA is removed from the chart
+    tradeAllowed = false;
+}
+
+//+------------------------------------------------------------------+
+//| Expert tick function                                             |
+//+------------------------------------------------------------------+
+void OnTick()
+{
+    // Check if trading is allowed
+    if (!tradeAllowed)
+        return;
+    
+    // Check for volatility using Donchian Channel
+    double upper = iHighest(NULL, 0, MODE_HIGH, 20, 0);
+    double lower = iLowest(NULL, 0, MODE_LOW, 20, 0);
+    double volatility = upper - lower;
+    
+    // Get current price
+    double currentPrice = SymbolInfoDouble(Symbol(), SYMBOL_BID);
+    
+    // Determine trading decision based on volatility
+    if (volatility > 0)
+    {
+        // Calculate stop loss and take profit levels
+        double stopLossLevel = currentPrice - StopLoss * Point;
+        double takeProfitLevel = currentPrice + TakeProfit * Point;
+        
+        // Place a buy order
+        int ticket = OrderSend(Symbol(), OP_BUY, LotSize, currentPrice, 0, stopLossLevel, takeProfitLevel, 'DAX JX Pro MT4', 0, 0, Green);
+        
+        if (ticket > 0)
+        {
+            Print('Buy order placed successfully. Ticket: ', ticket);
+        }
+        else
+        {
+            Print('Failed to place buy order. Error: ', GetLastError());
+        }
+    }
+    else
+    {
+        // No trading opportunity due to low volatility
+        Print('No trading opportunity due to low volatility.');
+    }
+}
+
+//+------------------------------------------------------------------+
+//| Custom functions                                                 |
+//+------------------------------------------------------------------+
+// Add any additional custom functions or indicators here
+
